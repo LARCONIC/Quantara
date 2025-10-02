@@ -57,7 +57,7 @@ Project Manager
 
 Intern
 
-4. Admin (System Owner – YOU)
+4. Admin (System Owner – Me)
 
 The first account created = Admin automatically.
 
@@ -187,13 +187,13 @@ status	text	planning
 
 4. Tech Stack
 
-Frontend: React + Vite + TailwindCSS
+Frontend: React + Vite + TailwindCSS and depend on requirment 
 
 Backend/DB/Auth: Supabase (Auth + Postgres + Row-level security)
 
-Hosting: Netlify (with _redirects for SPA)
+Hosting: vercel
 
-Future: GitHub + Netlify API integrations for deploy logs
+Future: GitHub + vercel API integrations for deploy logs
 
 5. Development Workflow (AI Agent Strategy)
 
