@@ -1,0 +1,58 @@
+import { Project } from './products';
+
+export const futureProjects: Project[] = [
+  {
+    id: "quantum-web",
+    name: "Quantum Web",
+    description: "Revolutionary web framework that leverages quantum computing principles for ultra-fast state management and parallel processing. Envisioning a future where web applications can solve complex problems in real-time.",
+    status: "coming-soon",
+    category: "future",
+    tags: ["Quantum Computing", "Web Framework", "Performance", "Revolutionary"],
+    technologies: ["Quantum Computing", "WebAssembly", "Advanced JavaScript"],
+  },
+  {
+    id: "neural-interface",
+    name: "Neural Interface",
+    description: "Brain-computer interface for direct thought-to-digital interaction. Imagine controlling applications, creating content, and communicating through pure intention and mental focus.",
+    status: "coming-soon",
+    category: "future",
+    tags: ["BCI", "Neural Networks", "Human-Computer Interaction", "Futuristic"],
+    technologies: ["Brain-Computer Interface", "Machine Learning", "Signal Processing"],
+  },
+  {
+    id: "holographic-workspace",
+    name: "Holographic Workspace",
+    description: "3D holographic environment for collaborative work, design, and creativity. Transform any space into an immersive digital workspace where ideas take physical form.",
+    status: "coming-soon",
+    category: "future",
+    tags: ["Holography", "3D", "Collaboration", "Immersive"],
+    technologies: ["Holographic Display", "Spatial Computing", "AR/VR"],
+  },
+  {
+    id: "ai-consciousness",
+    name: "AI Consciousness Engine",
+    description: "Exploring the boundaries of artificial consciousness and self-aware AI systems. Research into creating AI that can truly understand, empathize, and grow alongside humans.",
+    status: "coming-soon",
+    category: "future",
+    tags: ["AI Consciousness", "AGI", "Philosophy", "Ethics"],
+    technologies: ["Advanced AI", "Consciousness Modeling", "Ethical AI"],
+  },
+  {
+    id: "time-sync-network",
+    name: "Time-Sync Network",
+    description: "Theoretical framework for synchronizing human productivity with natural circadian rhythms and cosmic cycles. Optimizing human performance through temporal alignment.",
+    status: "coming-soon",
+    category: "future",
+    tags: ["Temporal Computing", "Circadian Rhythm", "Productivity", "Wellness"],
+    technologies: ["Temporal Algorithms", "Biometric Sensors", "Cosmic Data"],
+  },
+  {
+    id: "molecular-computing",
+    name: "Molecular Computing Platform",
+    description: "Computing at the molecular level for unprecedented processing power and energy efficiency. Harnessing the power of individual molecules for computation and data storage.",
+    status: "coming-soon",
+    category: "future",
+    tags: ["Molecular Computing", "Nanotechnology", "Energy Efficiency", "Revolutionary"],
+    technologies: ["Molecular Engineering", "Nanotechnology", "Quantum Mechanics"],
+  },
+];

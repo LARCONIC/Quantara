@@ -1,0 +1,108 @@
+/* Global styles for Quantara website */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Color variables */
+  --color-deep-space: #121212;
+  --color-nebula-gray: #1A1A1A;
+  --color-electric-blue: #00A9FF;
+  --color-starlight-white: #F5F5F5;
+  --color-cyber-silver: #B0B0B0;
+  
+  /* Animation variables */
+  --animation-speed-fast: 150ms;
+  --animation-speed-medium: 300ms;
+  --animation-speed-slow: 600ms;
+  --animation-ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --animation-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--color-deep-space);
+  color: var(--color-starlight-white);
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-deep-space);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 169, 255, 0.3);
+}
+
+/* Glassmorphism utility classes */
+.glass {
+  background: rgba(26, 26, 26, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.glass-hover:hover {
+  background: rgba(26, 26, 26, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
+              0 0 15px rgba(0, 169, 255, 0.6);
+}
+
+/* Electric blue glow effects */
+.glow-text {
+  text-shadow: 0 0 8px rgba(0, 169, 255, 0.6);
+}
+
+.glow-text:hover {
+  text-shadow: 0 0 12px rgba(0, 169, 255, 0.6), 0 0 20px rgba(0, 169, 255, 0.6);
+}
+
+.glow-border {
+  box-shadow: 0 0 15px rgba(0, 169, 255, 0.6);
+}
+
+.glow-border:hover {
+  box-shadow: 0 0 20px rgba(0, 169, 255, 0.6), 0 0 40px rgba(0, 169, 255, 0.4);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(to right, var(--color-electric-blue), var(--color-starlight-white));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-electric-blue);
+  outline-offset: 2px;
+}
+
+/* Responsive container adjustments */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
