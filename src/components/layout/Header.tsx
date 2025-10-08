@@ -37,7 +37,7 @@ const Header: React.FC = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {['Home', 'Products', 'Lab', 'Future', 'About', 'Contact'].map((item) => (
+            {['Home', 'Products', 'Lab', 'Services', 'Future', 'About', 'Contact'].map((item) => (
               <Link
                 key={item}
                 to={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
@@ -67,7 +67,7 @@ const Header: React.FC = () => {
         }`}
       >
         <nav className="container mx-auto px-4 flex flex-col space-y-4">
-          {['Home', 'Products', 'Lab', 'Future', 'About', 'Contact'].map((item) => (
+          {['Home', 'Products', 'Lab', 'Services', 'Future', 'About', 'Contact'].map((item) => (
             <Link
               key={item}
               to={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
