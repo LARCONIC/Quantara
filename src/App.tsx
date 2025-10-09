@@ -13,6 +13,7 @@ import ReadmePage from './pages/ReadmePage';
 import AuthPage from './pages/AuthPage';
 import ServicesPage from './pages/ServicesPage';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminSetupPage from './pages/AdminSetupPage';
 import './App.css';
 
 // Add custom animation classes
@@ -41,8 +42,9 @@ const App: React.FC = () => {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Auth Route */}
+          {/* Auth Routes */}
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/admin-setup" element={<AdminSetupPage />} />
           
           {/* Public Routes */}
           <Route path="/" element={<Layout />}>
