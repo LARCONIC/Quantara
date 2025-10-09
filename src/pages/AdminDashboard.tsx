@@ -10,8 +10,7 @@ import {
   FileText, 
   CheckCircle, 
   XCircle, 
-  Clock, 
-  Plus,
+  Clock,
   Mail,
   Building,
   DollarSign
