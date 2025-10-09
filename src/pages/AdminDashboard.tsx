@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/badge'
 import { Alert, AlertDescription } from '../components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
+import UserManagement from '../components/admin/UserManagement'
 import { 
   Users, 
   FileText, 
@@ -13,12 +14,14 @@ import {
   Clock,
   Mail,
   Building,
-  DollarSign
+  DollarSign,
+  Shield,
+  LogOut
 } from 'lucide-react'
 import { supabase, ClientApplication, Profile } from '../lib/supabase'
 
 const AdminDashboard: React.FC = () => {
-  const { profile } = useAuth()
+  const { profile, signOut } = useAuth()
   const [applications, setApplications] = useState<ClientApplication[]>([])
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
@@ -91,6 +94,10 @@ const AdminDashboard: React.FC = () => {
     }
   }
 
+  const handleSignOut = async () => {
+    await signOut()
+  }
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -102,16 +109,6 @@ const AdminDashboard: React.FC = () => {
       default:
         return <Badge variant="outline">{status}</Badge>
     }
-  }
-
-  const getRoleBadge = (role: string) => {
-    const colors = {
-      admin: 'text-purple-400 border-purple-400',
-      member: 'text-blue-400 border-blue-400',
-      client: 'text-green-400 border-green-400',
-      normal: 'text-gray-400 border-gray-400'
-    }
-    return <Badge variant="outline" className={colors[role as keyof typeof colors] || colors.normal}>{role}</Badge>
   }
 
   const stats = {
@@ -136,9 +133,22 @@ const AdminDashboard: React.FC = () => {
     <div className="min-h-screen bg-[#121212] text-white">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-gray-400">Welcome back, {profile?.email}</p>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
+              <Shield className="w-8 h-8 text-blue-400" />
+              Admin Dashboard
+            </h1>
+            <p className="text-gray-400">Welcome back, {profile?.email}</p>
+          </div>
+          <Button 
+            onClick={handleSignOut}
+            variant="outline"
+            className="text-red-400 border-red-400 hover:bg-red-400/10"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
 
         {error && (
@@ -197,7 +207,7 @@ const AdminDashboard: React.FC = () => {
               Applications ({stats.pendingApplications})
             </TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-gray-800">
-              Users ({stats.totalUsers})
+              User Management ({stats.totalUsers})
             </TabsTrigger>
           </TabsList>
 
@@ -277,52 +287,11 @@ const AdminDashboard: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">User Management</h2>
-              <Button onClick={fetchData} variant="outline" size="sm">
-                Refresh
-              </Button>
-            </div>
-
-            {profiles.length === 0 ? (
-              <Card className="bg-gray-900/50 border-gray-800">
-                <CardContent className="text-center py-8">
-                  <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">No users yet</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {profiles.map((user) => (
-                  <Card key={user.id} className="bg-gray-900/50 border-gray-800">
-                    <CardContent className="pt-6">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-white">{user.email}</p>
-                          <p className="text-sm text-gray-400">
-                            Joined: {new Date(user.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {getRoleBadge(user.role)}
-                          <Badge 
-                            variant="outline" 
-                            className={user.status === 'active' ? 'text-green-400 border-green-400' : 'text-yellow-400 border-yellow-400'}
-                          >
-                            {user.status}
-                          </Badge>
-                          {user.sub_role && (
-                            <Badge variant="outline" className="text-gray-400 border-gray-400">
-                              {user.sub_role}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+            <UserManagement 
+              profiles={profiles}
+              currentUserRole={profile?.role || 'normal'}
+              onRefresh={fetchData}
+            />
           </TabsContent>
         </Tabs>
       </div>
