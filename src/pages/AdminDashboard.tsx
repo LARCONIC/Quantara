@@ -33,7 +33,10 @@ const AdminDashboard: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch client applications
+      setLoading(true)
+      setError('')
+
+      // Fetch applications
       const { data: appsData, error: appsError } = await supabase
         .from('client_applications')
         .select('*')
@@ -41,7 +44,7 @@ const AdminDashboard: React.FC = () => {
 
       if (appsError) throw appsError
 
-      // Fetch user profiles
+      // Fetch profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -94,6 +97,41 @@ const AdminDashboard: React.FC = () => {
     }
   }
 
+  const handlePromoteUser = async (email: string) => {
+    try {
+      // Check if user exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', email)
+        .single()
+
+      if (fetchError) {
+        throw new Error('User not found with that email address')
+      }
+
+      if (existingProfile.role === 'admin') {
+        throw new Error('User is already an admin')
+      }
+
+      // Update user role to admin
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ 
+          role: 'admin', 
+          status: 'active' 
+        })
+        .eq('email', email)
+
+      if (updateError) throw updateError
+
+      // Refresh data
+      await fetchData()
+    } catch (err: any) {
+      throw new Error(err.message || 'Failed to promote user')
+    }
+  }
+
   const handleSignOut = async () => {
     await signOut()
   }
@@ -118,13 +156,20 @@ const AdminDashboard: React.FC = () => {
     totalUsers: profiles.length
   }
 
-  if (loading) {
+  if (!profile || profile.role !== 'admin') {
     return (
-      <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading dashboard...</p>
-        </div>
+      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <Shield className="w-12 h-12 mx-auto mb-4 text-red-500" />
+            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+            <p className="text-gray-400 mb-4">You need admin privileges to access this page.</p>
+            <Button onClick={handleSignOut} variant="outline">
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -135,146 +180,141 @@ const AdminDashboard: React.FC = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-              <Shield className="w-8 h-8 text-blue-400" />
-              Admin Dashboard
-            </h1>
-            <p className="text-gray-400">Welcome back, {profile?.email}</p>
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <p className="text-gray-400">Welcome back, {profile.email}</p>
           </div>
-          <Button 
-            onClick={handleSignOut}
-            variant="outline"
-            className="text-red-400 border-red-400 hover:bg-red-400/10"
-          >
+          <Button onClick={handleSignOut} variant="outline">
             <LogOut className="w-4 h-4 mr-2" />
             Sign Out
           </Button>
         </div>
 
         {error && (
-          <Alert className="mb-6 border-red-500/50 bg-red-500/10">
-            <AlertDescription className="text-red-400">{error}</AlertDescription>
+          <Alert className="mb-6 border-red-500 bg-red-500/10">
+            <AlertDescription className="text-red-400">
+              {error}
+            </AlertDescription>
           </Alert>
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-400">Total Applications</CardTitle>
-              <FileText className="h-4 w-4 text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{stats.totalApplications}</div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-400">Total Applications</p>
+                  <p className="text-2xl font-bold">{stats.totalApplications}</p>
+                </div>
+                <FileText className="w-8 h-8 text-blue-500" />
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-400">Pending Review</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{stats.pendingApplications}</div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-400">Pending</p>
+                  <p className="text-2xl font-bold">{stats.pendingApplications}</p>
+                </div>
+                <Clock className="w-8 h-8 text-yellow-500" />
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-400">Approved</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{stats.approvedApplications}</div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-400">Approved</p>
+                  <p className="text-2xl font-bold">{stats.approvedApplications}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gray-900/50 border-gray-800">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-400">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-purple-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{stats.totalUsers}</div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-400">Total Users</p>
+                  <p className="text-2xl font-bold">{stats.totalUsers}</p>
+                </div>
+                <Users className="w-8 h-8 text-purple-500" />
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Content */}
         <Tabs defaultValue="applications" className="space-y-6">
-          <TabsList className="bg-gray-900 border-gray-800">
-            <TabsTrigger value="applications" className="data-[state=active]:bg-gray-800">
-              Applications ({stats.pendingApplications})
-            </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-gray-800">
-              User Management ({stats.totalUsers})
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="applications">Applications</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
 
           <TabsContent value="applications" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Partnership Applications</h2>
-              <Button onClick={fetchData} variant="outline" size="sm">
-                Refresh
-              </Button>
-            </div>
-
-            {applications.length === 0 ? (
-              <Card className="bg-gray-900/50 border-gray-800">
-                <CardContent className="text-center py-8">
-                  <FileText className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">No applications yet</p>
+            {loading ? (
+              <div className="text-center py-8">
+                <p>Loading applications...</p>
+              </div>
+            ) : applications.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <FileText className="w-12 h-12 mx-auto mb-4 text-gray-500" />
+                  <h3 className="text-lg font-semibold mb-2">No Applications Yet</h3>
+                  <p className="text-gray-400">Partnership applications will appear here when submitted.</p>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
                 {applications.map((application) => (
-                  <Card key={application.id} className="bg-gray-900/50 border-gray-800">
+                  <Card key={application.id}>
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
-                          <CardTitle className="text-white flex items-center gap-2">
-                            <Building className="w-4 h-4" />
+                          <CardTitle className="flex items-center gap-2">
+                            <Building className="w-5 h-5" />
                             {application.org_name}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-2 mt-1">
-                            <Mail className="w-3 h-3" />
+                            <Mail className="w-4 h-4" />
                             {application.email}
                           </CardDescription>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {getStatusBadge(application.status)}
-                          <Badge variant="outline" className="text-blue-400 border-blue-400">
-                            <DollarSign className="w-3 h-3 mr-1" />
-                            {application.budget_range}
-                          </Badge>
-                        </div>
+                        {getStatusBadge(application.status)}
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-gray-300 mb-4">{application.description}</p>
-                      <div className="flex justify-between items-center">
-                        <p className="text-sm text-gray-500">
-                          Applied: {new Date(application.created_at).toLocaleDateString()}
-                        </p>
+                      <div className="space-y-3">
+                        <div>
+                          <h4 className="font-medium mb-1">Description</h4>
+                          <p className="text-gray-400 text-sm">{application.description}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-green-500" />
+                          <span className="text-sm">Budget: {application.budget_range}</span>
+                        </div>
                         {application.status === 'pending' && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-400 border-red-400 hover:bg-red-400/10"
-                              onClick={() => handleApplicationAction(application.id, 'rejected')}
-                            >
-                              <XCircle className="w-3 h-3 mr-1" />
-                              Reject
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700"
+                          <div className="flex gap-2 pt-2">
+                            <Button 
+                              size="sm" 
                               onClick={() => handleApplicationAction(application.id, 'approved')}
+                              className="bg-green-600 hover:bg-green-700"
                             >
-                              <CheckCircle className="w-3 h-3 mr-1" />
+                              <CheckCircle className="w-4 h-4 mr-1" />
                               Approve
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => handleApplicationAction(application.id, 'rejected')}
+                              className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Reject
                             </Button>
                           </div>
                         )}
@@ -288,9 +328,9 @@ const AdminDashboard: React.FC = () => {
 
           <TabsContent value="users" className="space-y-4">
             <UserManagement 
-              profiles={profiles}
-              currentUserRole={profile?.role || 'normal'}
-              onRefresh={fetchData}
+              users={profiles}
+              onPromoteUser={handlePromoteUser}
+              isLoading={loading}
             />
           </TabsContent>
         </Tabs>
