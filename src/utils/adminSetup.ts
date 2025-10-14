@@ -14,6 +14,19 @@ export interface AdminSetupResult {
 }
 
 /**
+ * Get the correct redirect URL based on environment
+ */
+const getRedirectUrl = (): string => {
+  // In production, use the actual domain
+  if (window.location.hostname !== 'localhost') {
+    return `${window.location.origin}/auth`
+  }
+  
+  // For development, use localhost
+  return `${window.location.origin}/auth`
+}
+
+/**
  * Creates the first admin user in the system
  * This should only be used during initial setup
  * Uses proper database functions for security
@@ -72,11 +85,15 @@ export const createFirstAdmin = async (
       }
     }
 
-    // Create the user account
+    // Get the correct redirect URL
+    const redirectUrl = getRedirectUrl()
+
+    // Create the user account with proper redirect URL
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: redirectUrl,
         data: {
           role: 'admin', // This will be used by the trigger
           is_first_admin: true
@@ -132,11 +149,12 @@ export const createFirstAdmin = async (
 
     return { 
       success: true, 
-      message: 'Admin account created successfully! Please check your email to verify your account before logging in.',
+      message: `Admin account created successfully! Please check your email and click the confirmation link. The link will redirect you to ${redirectUrl} where you can log in.`,
       data: { 
         userId: authData.user.id, 
         email,
-        needsVerification: !authData.user.email_confirmed_at
+        needsVerification: !authData.user.email_confirmed_at,
+        redirectUrl
       }
     }
 
@@ -255,7 +273,7 @@ export const getAdminStats = async (): Promise<AdminSetupResult> => {
       pendingApplications: applicationsData.filter(app => app.status === 'pending').length,
       approvedApplications: applicationsData.filter(app => app.status === 'approved').length,
       rejectedApplications: applicationsData.filter(app => app.status === 'rejected').length,
-      roleBreakdown: {
+      usersByRole: {
         admin: usersData.filter(user => user.role === 'admin').length,
         member: usersData.filter(user => user.role === 'member').length,
         client: usersData.filter(user => user.role === 'client').length,
@@ -265,15 +283,15 @@ export const getAdminStats = async (): Promise<AdminSetupResult> => {
 
     return { 
       success: true, 
-      message: 'Statistics retrieved successfully', 
-      data: stats 
+      message: 'Statistics retrieved successfully',
+      data: stats
     }
 
   } catch (error: any) {
     console.error('Unexpected error in getAdminStats:', error)
     return { 
       success: false, 
-      message: 'Failed to fetch statistics. Please try again.',
+      message: 'An unexpected error occurred while fetching statistics.',
       error: 'UNEXPECTED_ERROR'
     }
   }
@@ -281,55 +299,60 @@ export const getAdminStats = async (): Promise<AdminSetupResult> => {
 
 /**
  * Validates if the current user has admin privileges
- * Uses secure server-side validation
+ * Used for client-side route protection
  */
 export const validateAdminAccess = async (): Promise<AdminSetupResult> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    const profile = await getCurrentProfile()
     
-    if (!user) {
+    if (!profile) {
       return { 
         success: false, 
-        message: 'Not authenticated',
+        message: 'User not authenticated',
         error: 'NOT_AUTHENTICATED'
       }
     }
 
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('role, status')
-      .eq('id', user.id)
-      .single()
-
-    if (error) {
-      console.error('Profile fetch error:', error)
+    if (profile.role !== 'admin') {
       return { 
         success: false, 
-        message: 'Unable to verify admin access',
-        error: 'PROFILE_FETCH_ERROR'
-      }
-    }
-
-    if (!profile || profile.role !== 'admin' || profile.status !== 'active') {
-      return { 
-        success: false, 
-        message: 'Admin access required',
-        error: 'INSUFFICIENT_PERMISSIONS'
+        message: 'Insufficient privileges. Admin access required.',
+        error: 'INSUFFICIENT_PRIVILEGES'
       }
     }
 
     return { 
       success: true, 
-      message: 'Admin access confirmed',
-      data: { role: profile.role, status: profile.status }
+      message: 'Admin access validated',
+      data: { profile }
     }
 
   } catch (error: any) {
     console.error('Unexpected error in validateAdminAccess:', error)
     return { 
       success: false, 
-      message: 'Access validation failed',
-      error: 'UNEXPECTED_ERROR'
+      message: 'Unable to validate admin access. Please try again.',
+      error: 'VALIDATION_ERROR'
     }
+  }
+}
+
+// Helper function to get current profile (imported from supabase.ts)
+const getCurrentProfile = async () => {
+  try {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) return null
+    
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+    
+    if (profileError) return null
+    return profile
+  } catch (error) {
+    console.error('Error getting current profile:', error)
+    return null
   }
 }
