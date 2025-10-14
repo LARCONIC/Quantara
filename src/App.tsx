@@ -14,6 +14,7 @@ import AuthPage from './pages/AuthPage';
 import ServicesPage from './pages/ServicesPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminSetupPage from './pages/AdminSetupPage';
+import EmailConfirmPage from './pages/EmailConfirmPage';
 import './App.css';
 
 // Add custom animation classes
@@ -31,32 +32,28 @@ const App: React.FC = () => {
     }
     
     return () => {
-      document.body.classList.remove('bg-[#121212]', 'text-white');
-      if (prefersReducedMotion) {
-        document.body.classList.remove('reduce-motion');
-      }
+      document.body.classList.remove('bg-[#121212]', 'text-white', 'reduce-motion');
     };
   }, []);
-  
+
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Auth Routes */}
+          {/* Public Routes with Layout */}
+          <Route path="/" element={<Layout><HomePage /></Layout>} />
+          <Route path="/about" element={<Layout><AboutPage /></Layout>} />
+          <Route path="/products" element={<Layout><ProductsPage /></Layout>} />
+          <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
+          <Route path="/lab" element={<Layout><LabPage /></Layout>} />
+          <Route path="/future" element={<Layout><FuturePage /></Layout>} />
+          <Route path="/readme" element={<Layout><ReadmePage /></Layout>} />
+          <Route path="/services" element={<Layout><ServicesPage /></Layout>} />
+          
+          {/* Auth Routes (No Layout) */}
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/admin-setup" element={<AdminSetupPage />} />
-          
-          {/* Public Routes */}
-          <Route path="/" element={<Layout />}>
-            <Route index element={<HomePage />} />
-            <Route path="products" element={<ProductsPage />} />
-            <Route path="lab" element={<LabPage />} />
-            <Route path="future" element={<FuturePage />} />
-            <Route path="about" element={<AboutPage />} />
-            <Route path="contact" element={<ContactPage />} />
-            <Route path="services" element={<ServicesPage />} />
-            <Route path="readme" element={<ReadmePage />} />
-          </Route>
+          <Route path="/confirm" element={<EmailConfirmPage />} />
 
           {/* Protected Routes */}
           <Route 
@@ -95,25 +92,6 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </ProtectedRoute>
-            } 
-          />
-
-          {/* Unauthorized Route */}
-          <Route 
-            path="/unauthorized" 
-            element={
-              <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
-                <div className="text-center">
-                  <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-                  <p className="text-gray-400 mb-4">You don't have permission to access this page.</p>
-                  <button 
-                    onClick={() => window.history.back()}
-                    className="text-blue-400 hover:text-blue-300"
-                  >
-                    Go Back
-                  </button>
-                </div>
-              </div>
             } 
           />
 
