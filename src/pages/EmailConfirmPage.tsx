@@ -15,41 +15,81 @@ const EmailConfirmPage: React.FC = () => {
   useEffect(() => {
     const handleEmailConfirmation = async () => {
       try {
-        // Get the token from URL parameters
-        const token = searchParams.get('token')
+        // Get parameters from URL
+        const token_hash = searchParams.get('token_hash')
         const type = searchParams.get('type')
+        const access_token = searchParams.get('access_token')
+        const refresh_token = searchParams.get('refresh_token')
 
-        if (!token || type !== 'signup') {
-          setStatus('error')
-          setMessage('Invalid confirmation link. Please check your email and try again.')
-          return
+        console.log('URL params:', { token_hash, type, access_token, refresh_token })
+
+        // Method 1: If we have access_token and refresh_token, set the session directly
+        if (access_token && refresh_token) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token
+          })
+
+          if (error) {
+            console.error('Session error:', error)
+            setStatus('error')
+            setMessage(`Session setup failed: ${error.message}`)
+            return
+          }
+
+          if (data.user) {
+            setStatus('success')
+            setMessage('Email confirmed successfully! You can now log in to your admin account.')
+            
+            // Redirect to auth page after 3 seconds
+            setTimeout(() => {
+              navigate('/auth')
+            }, 3000)
+            return
+          }
         }
 
-        // Verify the email confirmation
-        const { data, error } = await supabase.auth.verifyOtp({
-          token_hash: token,
-          type: 'signup'
-        })
+        // Method 2: If we have token_hash, verify OTP
+        if (token_hash && type) {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash,
+            type: type as any
+          })
 
-        if (error) {
-          console.error('Email confirmation error:', error)
-          setStatus('error')
-          setMessage(`Confirmation failed: ${error.message}`)
-          return
+          if (error) {
+            console.error('OTP verification error:', error)
+            setStatus('error')
+            setMessage(`Confirmation failed: ${error.message}`)
+            return
+          }
+
+          if (data.user) {
+            setStatus('success')
+            setMessage('Email confirmed successfully! You can now log in to your admin account.')
+            
+            // Redirect to auth page after 3 seconds
+            setTimeout(() => {
+              navigate('/auth')
+            }, 3000)
+            return
+          }
         }
 
-        if (data.user) {
+        // Method 3: Check if user is already authenticated
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user && user.email_confirmed_at) {
           setStatus('success')
-          setMessage('Email confirmed successfully! You can now log in to your admin account.')
+          setMessage('Email already confirmed! You can now log in to your admin account.')
           
-          // Redirect to auth page after 3 seconds
           setTimeout(() => {
             navigate('/auth')
           }, 3000)
-        } else {
-          setStatus('error')
-          setMessage('Email confirmation failed. Please try again.')
+          return
         }
+
+        // If none of the methods worked
+        setStatus('error')
+        setMessage('Invalid or expired confirmation link. Please try creating your admin account again.')
 
       } catch (error: any) {
         console.error('Unexpected error during email confirmation:', error)
