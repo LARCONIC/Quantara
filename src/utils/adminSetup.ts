@@ -17,13 +17,10 @@ export interface AdminSetupResult {
  * Get the correct redirect URL based on environment
  */
 const getRedirectUrl = (): string => {
-  // In production, use the actual domain
-  if (window.location.hostname !== 'localhost') {
-    return `${window.location.origin}/auth`
-  }
+  const currentUrl = window.location.origin
   
-  // For development, use localhost
-  return `${window.location.origin}/auth`
+  // Always use the current domain for redirect
+  return `${currentUrl}/confirm`
 }
 
 /**
@@ -87,6 +84,7 @@ export const createFirstAdmin = async (
 
     // Get the correct redirect URL
     const redirectUrl = getRedirectUrl()
+    console.log('Using redirect URL:', redirectUrl)
 
     // Create the user account with proper redirect URL
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -149,7 +147,7 @@ export const createFirstAdmin = async (
 
     return { 
       success: true, 
-      message: `Admin account created successfully! Please check your email and click the confirmation link. The link will redirect you to ${redirectUrl} where you can log in.`,
+      message: `Admin account created successfully! Please check your email and click the confirmation link. Make sure to open the email on the same device/browser where you created the account.`,
       data: { 
         userId: authData.user.id, 
         email,
