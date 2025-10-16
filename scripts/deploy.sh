@@ -1,0 +1,250 @@
+#!/bin/bash
+
+# QUANTARA PRODUCTION DEPLOYMENT SCRIPT
+# Automated deployment with security checks and validation
+
+set -e  # Exit on any error
+
+echo "🚀 Starting Quantara Production Deployment..."
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Check if required environment variables are set
+check_env_vars() {
+    print_status "Checking environment variables..."
+    
+    required_vars=(
+        "VITE_SUPABASE_URL"
+        "VITE_SUPABASE_ANON_KEY"
+    )
+    
+    missing_vars=()
+    
+    for var in "${required_vars[@]}"; do
+        if [ -z "${!var}" ]; then
+            missing_vars+=("$var")
+        fi
+    done
+    
+    if [ ${#missing_vars[@]} -ne 0 ]; then
+        print_error "Missing required environment variables:"
+        for var in "${missing_vars[@]}"; do
+            echo "  - $var"
+        done
+        exit 1
+    fi
+    
+    print_success "All required environment variables are set"
+}
+
+# Install dependencies
+install_dependencies() {
+    print_status "Installing dependencies..."
+    npm ci --production=false
+    print_success "Dependencies installed"
+}
+
+# Run security audit
+security_audit() {
+    print_status "Running security audit..."
+    npm audit --audit-level=high
+    print_success "Security audit passed"
+}
+
+# Run type checking
+type_check() {
+    print_status "Running TypeScript type checking..."
+    npx tsc --noEmit
+    print_success "Type checking passed"
+}
+
+# Run linting
+lint_check() {
+    print_status "Running ESLint..."
+    npx eslint src --ext .ts,.tsx --max-warnings 0
+    print_success "Linting passed"
+}
+
+# Build the application
+build_app() {
+    print_status "Building application..."
+    npm run build
+    print_success "Application built successfully"
+}
+
+# Validate build output
+validate_build() {
+    print_status "Validating build output..."
+    
+    if [ ! -d "dist" ]; then
+        print_error "Build directory 'dist' not found"
+        exit 1
+    fi
+    
+    if [ ! -f "dist/index.html" ]; then
+        print_error "index.html not found in build output"
+        exit 1
+    fi
+    
+    # Check if critical files exist
+    critical_files=(
+        "dist/assets"
+        "dist/index.html"
+    )
+    
+    for file in "${critical_files[@]}"; do
+        if [ ! -e "$file" ]; then
+            print_error "Critical file missing: $file"
+            exit 1
+        fi
+    done
+    
+    print_success "Build validation passed"
+}
+
+# Security headers validation
+validate_security_headers() {
+    print_status "Validating security configuration..."
+    
+    if [ ! -f "vercel.json" ]; then
+        print_error "vercel.json not found"
+        exit 1
+    fi
+    
+    # Check if security headers are configured
+    if ! grep -q "Strict-Transport-Security" vercel.json; then
+        print_error "Security headers not configured in vercel.json"
+        exit 1
+    fi
+    
+    print_success "Security configuration validated"
+}
+
+# Database migration check
+check_database() {
+    print_status "Checking database configuration..."
+    
+    if [ ! -f "database/rls-policies.sql" ]; then
+        print_warning "RLS policies file not found. Please ensure database security is configured."
+    else
+        print_success "Database security policies found"
+    fi
+}
+
+# Performance optimization check
+performance_check() {
+    print_status "Running performance checks..."
+    
+    # Check bundle size
+    if [ -d "dist/assets" ]; then
+        bundle_size=$(du -sh dist/assets | cut -f1)
+        print_status "Bundle size: $bundle_size"
+        
+        # Warn if bundle is too large (>5MB)
+        size_bytes=$(du -sb dist/assets | cut -f1)
+        if [ "$size_bytes" -gt 5242880 ]; then
+            print_warning "Bundle size is large ($bundle_size). Consider code splitting."
+        fi
+    fi
+    
+    print_success "Performance check completed"
+}
+
+# Generate deployment report
+generate_report() {
+    print_status "Generating deployment report..."
+    
+    cat > deployment-report.md << EOF
+# Quantara Deployment Report
+
+**Date:** $(date)
+**Commit:** $(git rev-parse HEAD)
+**Branch:** $(git branch --show-current)
+
+## Build Information
+- Node Version: $(node --version)
+- NPM Version: $(npm --version)
+- Build Status: ✅ Success
+
+## Security Checklist
+- [x] Security headers configured
+- [x] TypeScript type checking passed
+- [x] ESLint validation passed
+- [x] Security audit passed
+- [x] Environment variables validated
+
+## Performance Metrics
+- Bundle Size: $(du -sh dist/assets 2>/dev/null | cut -f1 || echo "N/A")
+- Build Time: $(date)
+
+## Next Steps
+1. Deploy to Vercel
+2. Configure custom SMTP
+3. Test email confirmation flow
+4. Implement RLS policies in Supabase
+5. Monitor application performance
+
+---
+Generated by Quantara deployment script
+EOF
+
+    print_success "Deployment report generated: deployment-report.md"
+}
+
+# Main deployment function
+main() {
+    echo "🏢 QUANTARA PRODUCTION DEPLOYMENT"
+    echo "=================================="
+    echo ""
+    
+    # Run all checks and build steps
+    check_env_vars
+    install_dependencies
+    security_audit
+    type_check
+    lint_check
+    build_app
+    validate_build
+    validate_security_headers
+    check_database
+    performance_check
+    generate_report
+    
+    echo ""
+    echo "🎉 DEPLOYMENT PREPARATION COMPLETE!"
+    echo "=================================="
+    print_success "All checks passed successfully"
+    print_status "Ready for production deployment"
+    echo ""
+    print_status "Next steps:"
+    echo "1. Review deployment-report.md"
+    echo "2. Deploy to Vercel: vercel --prod"
+    echo "3. Configure SMTP in Supabase"
+    echo "4. Test complete application flow"
+    echo ""
+}
+
+# Run main function
+main "$@"
