@@ -19,7 +19,7 @@ export const REQUIRED_ENV_VARS = {
   JWT_SECRET: process.env.JWT_SECRET,
   
   // Production Domain
-  PRODUCTION_DOMAIN: process.env.PRODUCTION_DOMAIN || 'quantara-1.vercel.app'
+  PRODUCTION_DOMAIN: process.env.PRODUCTION_DOMAIN || 'quantara-l.vercel.app'
 }
 
 // Security Headers for Production
@@ -132,8 +132,8 @@ export const COMPLIANCE = {
 }
 
 // Validate environment for production
-export const validateProductionEnvironment = () => {
-  const missing = []
+export const validateProductionEnvironment = (): boolean => {
+  const missing: string[] = []
   
   Object.entries(REQUIRED_ENV_VARS).forEach(([key, value]) => {
     if (!value) missing.push(key)
