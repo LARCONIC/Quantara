@@ -14,7 +14,7 @@ import AuthPage from './pages/AuthPage';
 import ServicesPage from './pages/ServicesPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminSetupPage from './pages/AdminSetupPage';
-import EmailConfirmPage from './pages/EmailConfirmPage';
+import EmailConfirmationPage from './pages/EmailConfirmationPage'; // Enterprise confirmation handler
 import './App.css';
 
 // Add custom animation classes
@@ -53,7 +53,7 @@ const App: React.FC = () => {
           {/* Auth Routes (No Layout) */}
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/admin-setup" element={<AdminSetupPage />} />
-          <Route path="/confirm" element={<EmailConfirmPage />} />
+          <Route path="/confirm" element={<EmailConfirmationPage />} /> {/* Enterprise confirmation */}
 
           {/* Protected Routes */}
           <Route 
@@ -70,27 +70,22 @@ const App: React.FC = () => {
             path="/studio" 
             element={
               <ProtectedRoute requiredRole="client">
-                <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
+                <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
                   <div className="text-center">
-                    <h1 className="text-2xl font-bold mb-4">Client Studio</h1>
-                    <p className="text-gray-400">Coming Soon...</p>
+                    <h1 className="text-4xl font-bold text-white mb-4">Client Studio</h1>
+                    <p className="text-gray-300">Coming Soon - Advanced client management interface</p>
                   </div>
                 </div>
               </ProtectedRoute>
             } 
           />
 
-          {/* Member Dashboard - Coming Soon */}
+          {/* Dashboard Route - Redirects based on role */}
           <Route 
             path="/dashboard" 
             element={
-              <ProtectedRoute requiredRole="member">
-                <div className="min-h-screen bg-[#121212] text-white flex items-center justify-center">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold mb-4">Member Dashboard</h1>
-                    <p className="text-gray-400">Coming Soon...</p>
-                  </div>
-                </div>
+              <ProtectedRoute>
+                <DashboardRedirect />
               </ProtectedRoute>
             } 
           />
@@ -101,6 +96,55 @@ const App: React.FC = () => {
       </Router>
     </AuthProvider>
   );
+};
+
+// Component to redirect users to appropriate dashboard based on role
+const DashboardRedirect: React.FC = () => {
+  const [loading, setLoading] = React.useState(true);
+  const [userRole, setUserRole] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          setUserRole(profile?.role || 'client');
+        }
+      } catch (error) {
+        console.error('Error checking user role:', error);
+        setUserRole('client'); // Default to client
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkUserRole();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect based on role
+  if (userRole === 'admin') {
+    return <Navigate to="/admin" replace />;
+  } else {
+    return <Navigate to="/studio" replace />;
+  }
 };
 
 export default App;
