@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { supabase } from './lib/supabase';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import HomePage from './pages/HomePage';
@@ -14,7 +15,7 @@ import AuthPage from './pages/AuthPage';
 import ServicesPage from './pages/ServicesPage';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminSetupPage from './pages/AdminSetupPage';
-import EmailConfirmationPage from './pages/EmailConfirmationPage'; // Enterprise confirmation handler
+import EmailConfirmPage from './pages/EmailConfirmPage';
 import './App.css';
 
 // Add custom animation classes
@@ -53,7 +54,7 @@ const App: React.FC = () => {
           {/* Auth Routes (No Layout) */}
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/admin-setup" element={<AdminSetupPage />} />
-          <Route path="/confirm" element={<EmailConfirmationPage />} /> {/* Enterprise confirmation */}
+          <Route path="/confirm" element={<EmailConfirmPage />} />
 
           {/* Protected Routes */}
           <Route 
